@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="../css/style.css">
 <style>
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -88,76 +88,49 @@ h1 { text-align:center; margin-bottom: 20px; text-shadow:2px 2px #000; }
 <h1>Admin Dashboard</h1>
 
 <div class="stats">
-    <div class="card">Total Bookings<br>{{ total_bookings }}</div>
-    <div class="card">Today Bookings<br>{{ today_bookings }}</div>
-    <div class="card">Pending<br>{{ pending }}</div>
-    <div class="card">Accepted<br>{{ accepted }}</div>
+    <div class="card">Total Bookings<br><span id="stat-total">...</span></div>
+    <div class="card">Today Bookings<br><span id="stat-today">...</span></div>
+    <div class="card">Pending<br><span id="stat-pending">...</span></div>
+    <div class="card">Accepted<br><span id="stat-accepted">...</span></div>
 </div>
 
 <h2>Bookings</h2>
 <div class="table-container">
 <table class="table">
 <tr><th>ID</th><th>Name</th><th>Phone</th><th>Service</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr>
-{% for b in bookings %}
-<tr>
-<td>{{ b.id }}</td>
-<td>{{ b.name }}</td>
-<td>{{ b.phone }}</td>
-<td>{{ b.service }}</td>
-<td>{{ b.date }}</td>
-<td>{{ b.time }}</td>
-<td>{{ b.status }}</td>
-<td>
-{% if b.status=="Pending" %}
-<a href="{{ url_for('accept_booking', id=b.id) }}" class="button">Accept</a>
-{% endif %}
-<a href="{{ url_for('delete_booking', id=b.id) }}" class="button">Delete</a>
-</td>
-</tr>
-{% endfor %}
+<!-- Rows will be populated by Supabase JS -->
 </table>
 </div>
 
-{% if session['role']=="main" %}
-<h2>Admins Management</h2>
-<form method="POST" action="{{ url_for('add_admin') }}">
-<input type="text" name="username" placeholder="Username" required>
-<input type="password" name="password" placeholder="Password" required>
-<select name="role">
-<option value="admin">Admin</option>
-<option value="main">Main Admin</option>
-</select>
-<button type="submit" class="button">Add Admin</button>
-</form>
+<br><hr style="border-color: rgba(255,255,255,0.2);"><br>
 
-<div class="table-container">
-<table class="table">
-<tr><th>ID</th><th>Username</th><th>Role</th><th>Action</th></tr>
-{% for a in admins %}
-<tr>
-<td>{{ a.id }}</td>
-<td>{{ a.username }}</td>
-<td>{{ a.role }}</td>
-<td>
-{% if a.role != "main" %}
-<a href="{{ url_for('delete_admin', id=a.id) }}" class="button">Delete</a>
-{% endif %}
-</td>
-</tr>
-{% endfor %}
-</table>
+<h2>Admin Management</h2>
+<p style="text-align:center; font-size:14px; margin-bottom:20px;">Use this section to grant Dashboard access by associating active Supabase Auth user emails.</p>
+
+<div class="table-container" style="margin-bottom: 20px;">
+    <form id="addAdminForm" style="display:flex; justify-content:center; gap:10px; margin-bottom: 15px;">
+        <input type="email" id="newAdminEmail" placeholder="New Admin Email" required style="padding:8px; border-radius:5px; border:none;">
+        <select id="newAdminRole" style="padding:8px; border-radius:5px; border:none;">
+            <option value="Admin">Admin</option>
+            <option value="Main Admin">Main Admin</option>
+        </select>
+        <button type="submit" class="button">Add Admin Role</button>
+    </form>
+
+    <table class="table" id="adminsTable">
+        <tr><th>ID</th><th>Email</th><th>Role</th><th>Actions</th></tr>
+        <!-- Rows populated by Javascript -->
+    </table>
 </div>
 
-<h2>Change Main Admin Credentials</h2>
-<form method="POST" action="{{ url_for('change_main_admin') }}">
-<input type="text" name="username" placeholder="New Username" required>
-<input type="password" name="password" placeholder="New Password" required>
-<button type="submit" class="button">Update</button>
-</form>
-{% endif %}
-
-<a href="{{ url_for('logout') }}" class="button">Logout</a>
+<a href="/logout" id="logoutBtn" class="button">Logout</a>
 
 </div>
+<!-- SUPABASE FIX: Supabase config + client scripts -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabaseClient.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/admin.js"></script>
 </body>
 </html>

@@ -1232,7 +1232,7 @@
     <div class="navbar-container">
         <div class="logo" onclick="scrollToSection('hero')">
             <div class="logo-icon">
-                <img src="{{ url_for('static', filename='uploads/logo.jpeg') }}" alt="Logo">
+                <img src="assets/logo.jpeg" alt="Logo">
             </div>
             <div class="logo-text">
                 <h1>House Maid Service</h1>
@@ -1428,7 +1428,7 @@
             <section class="qatar-poster">
 
          <div class="poster-container">
-                    <img src="{{ url_for('static', filename='uploads/image.jpeg') }}" 
+                    <img src="assets/image.jpeg" 
                      alt="House Maid Services Qatar"
                       class="responsive-img">
           </div>
@@ -1629,7 +1629,7 @@
                         <div class="footer-section">
                             <div class="footer-logo">
                                 <div class="footer-logo-icon" style="width: 60px; height: 60px; overflow: hidden; border-radius: 8px;">
-                                    <img src="{{url_for('static', filename='uploads/logo.jpeg')}}" 
+                                    <img src="assets/logo.jpeg" 
                                         alt="House Maid Service Logo" 
                                         style="width: 100%; height: 100%; object-fit: contain; display: block;">
                                 </div>
@@ -1715,14 +1715,10 @@
         </button>
     </div>
             <!-- ADD BELOW THIS LINE - Supabase browser client -->
-            <script>
-                window.SUPABASE_CONFIG = {
-                    url: "{{ supabase_url }}",
-                    anonKey: "{{ supabase_anon_key }}"
-                };
-            </script>
+            
             <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-            <script src="/static/supabaseClient.js"></script>
+            <script src="js/supabaseClient.js"></script>
+<script src="js/bookings.js"></script>
             <script>
 
 // ================= LANGUAGE SWITCH =================
