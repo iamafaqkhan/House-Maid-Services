@@ -1,9 +1,10 @@
 // js/admin.js
 
 window.fetchBookingsFromSupabase = async function () {
-    if (!window.appSupabaseClient) return { success: false, reason: "not_configured", data: [] };
+    const client = window.getSupabaseClient();
+    if (!client) return { success: false, reason: "not_configured", data: [] };
     try {
-        const { data, error } = await window.appSupabaseClient
+        const { data, error } = await client
             .from("bookings")
             .select("*")
             .order("created_at", { ascending: false });
@@ -15,9 +16,10 @@ window.fetchBookingsFromSupabase = async function () {
 };
 
 window.deleteBookingInSupabase = async function (id) {
-    if (!window.appSupabaseClient) return { success: false };
+    const client = window.getSupabaseClient();
+    if (!client) return { success: false };
     try {
-        const { error } = await window.appSupabaseClient.from("bookings").delete().eq("id", id);
+        const { error } = await client.from("bookings").delete().eq("id", id);
         if (error) return { success: false, error: error };
         return { success: true };
     } catch (error) {
@@ -26,9 +28,10 @@ window.deleteBookingInSupabase = async function (id) {
 };
 
 async function updateBookingStatusInSupabase(id, newStatus) {
-    if (!window.appSupabaseClient) return { success: false };
+    const client = window.getSupabaseClient();
+    if (!client) return { success: false };
     try {
-        var resp = await window.appSupabaseClient.from("bookings").update({ status: newStatus }).eq("id", id);
+        var resp = await client.from("bookings").update({ status: newStatus }).eq("id", id);
         if (resp.error) return { success: false, error: resp.error };
         return { success: true };
     } catch (err) {
@@ -55,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function() {
         var statPending = document.getElementById("stat-pending");
         var statAccepted = document.getElementById("stat-accepted");
 
-        if (!statTotal) return; // Fallback cards update not found
+        if (!statTotal) return; 
 
         var total = rows.length;
         var todayStr = new Date().toISOString().split("T")[0];
@@ -96,7 +99,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function renderSupabaseRows(rows) {
         if (!bookingsTable) return;
         var allRows = bookingsTable.querySelectorAll("tr");
-        for (var i = 1; i < allRows.length; i++) allRows[i].remove(); // Clear placeholder rows
+        for (var i = 1; i < allRows.length; i++) allRows[i].remove(); 
 
         rows.forEach(function (b) {
             var tr = document.createElement("tr");
@@ -139,7 +142,6 @@ document.addEventListener("DOMContentLoaded", function() {
         updateStatsCards(data);
     }
 
-    // Delegated click handler
     bookingsTable.addEventListener("click", async function (event) {
         var target = event.target;
         if (!target) return;
@@ -194,42 +196,34 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // Real-Time DB Subscription
-    if (window.appSupabaseClient) {
-        window.appSupabaseClient.channel('custom-all-channel')
+    const realtimeClient = window.getSupabaseClient();
+    if (realtimeClient) {
+        realtimeClient.channel('custom-all-channel')
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'bookings' },
                 (payload) => {
                     console.log('Realtime change received!', payload)
-                    loadSupabaseBookings(); // Automatically re-fetch UI
+                    loadSupabaseBookings(); 
                 }
             )
             .subscribe()
     }
 
     // DEBUG MODE: Bypassing authGuard
-    // Directly loading bookings without session validation
     loadSupabaseBookings();
 
-    // Setup Logout (will redirect but no longer protects load)
-    var logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function(e) {
-            e.preventDefault();
-            if (window.appSupabaseClient) {
-                await window.appSupabaseClient.auth.signOut();
-            }
-            window.location.href = '../login/';
-            // ============================================
+    // ============================================
     // ADMINS MANAGEMENT LOGIC
     // ============================================
     var adminsTable = document.querySelector("#adminsTable");
     var addAdminForm = document.getElementById("addAdminForm");
 
     window.fetchAdminsFromSupabase = async function () {
-        if (!window.appSupabaseClient) return { success: false, data: [] };
+        const client = window.getSupabaseClient();
+        if (!client) return { success: false, data: [] };
         try {
-            const { data, error } = await window.appSupabaseClient
+            const { data, error } = await client
                 .from("admins").select("*").order("created_at", { ascending: false });
             if (error) return { success: false, error: error, data: [] };
             return { success: true, data: data || [] };
@@ -264,6 +258,9 @@ document.addEventListener("DOMContentLoaded", function() {
     if (addAdminForm) {
         addAdminForm.addEventListener("submit", async function(e) {
             e.preventDefault();
+            const client = window.getSupabaseClient();
+            if (!client) return;
+
             var btn = addAdminForm.querySelector('button');
             var emailVal = document.getElementById("newAdminEmail").value.trim();
             var roleVal = document.getElementById("newAdminRole").value;
@@ -275,14 +272,14 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("ADMIN INSERT DATA:", payload);
 
             try {
-                var { error } = await window.appSupabaseClient.from("admins").insert([payload]);
+                var { error } = await client.from("admins").insert([payload]);
 
                 if (error) {
                     console.log("ADMIN INSERT ERROR:", error);
                     alert("Failed to add admin metadata: " + error.message);
                 } else {
                     document.getElementById("newAdminEmail").value = "";
-                    loadSupabaseAdmins(); // Refresh table visually
+                    loadSupabaseAdmins(); 
                 }
             } catch(err) {
                  console.log("ADMIN INSERT ERROR:", err);
@@ -299,17 +296,20 @@ document.addEventListener("DOMContentLoaded", function() {
 
             if (target.classList.contains("supa-admin-delete-btn")) {
                 event.preventDefault();
+                const client = window.getSupabaseClient();
+                if (!client) return;
+
                 var deleteId = target.getAttribute("data-id");
                 if (!confirm("Delete admin association?")) return;
                 
                 target.textContent = "Deleting...";
                 try {
-                    var { error } = await window.appSupabaseClient.from("admins").delete().eq("id", deleteId);
+                    var { error } = await client.from("admins").delete().eq("id", deleteId);
                     if (error) {
                         alert("Delete failed! See console.");
                         target.textContent = "Delete";
                     } else {
-                        target.closest("tr").remove(); // Instantly removes row
+                        target.closest("tr").remove(); 
                     }
                 } catch(err) {
                     alert("Delete failed.");
@@ -319,9 +319,18 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // Call load when dashboard opens
     loadSupabaseAdmins();
 
-});
+    // Setup Logout
+    var logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const client = window.getSupabaseClient();
+            if (client) {
+                await client.auth.signOut();
+            }
+            window.location.href = '../login/';
+        });
     }
 });
