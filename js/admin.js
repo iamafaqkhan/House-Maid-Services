@@ -210,8 +210,20 @@ document.addEventListener("DOMContentLoaded", function() {
             .subscribe()
     }
 
-    // DEBUG MODE: Bypassing authGuard
-    loadSupabaseBookings();
+    // Auth Guard Check
+    const authCheck = async () => {
+        const { success, session } = await window.getSupabaseSession();
+        if (!success || !session) {
+            console.log("No active session found. Redirecting to login...");
+            window.location.href = "../login/";
+            return;
+        }
+        console.log("Session verified. Loading data...");
+        loadSupabaseBookings();
+        loadSupabaseAdmins();
+    };
+
+    authCheck();
 
     // ============================================
     // ADMINS MANAGEMENT LOGIC
@@ -256,36 +268,48 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     if (addAdminForm) {
+        var adminMgmtStatus = document.getElementById("adminMgmtStatus");
+
         addAdminForm.addEventListener("submit", async function(e) {
             e.preventDefault();
             const client = window.getSupabaseClient();
-            if (!client) return;
+            if (!client || !adminMgmtStatus) return;
 
             var btn = addAdminForm.querySelector('button');
             var emailVal = document.getElementById("newAdminEmail").value.trim();
             var roleVal = document.getElementById("newAdminRole").value;
 
             if (!emailVal) return;
+            
+            btn.disabled = true;
             btn.textContent = "Adding...";
+            adminMgmtStatus.textContent = "Adding " + emailVal + "...";
+            adminMgmtStatus.style.color = "#FFD700";
             
             var payload = { email: emailVal, role: roleVal };
-            console.log("ADMIN INSERT DATA:", payload);
 
             try {
                 var { error } = await client.from("admins").insert([payload]);
 
                 if (error) {
-                    console.log("ADMIN INSERT ERROR:", error);
-                    alert("Failed to add admin metadata: " + error.message);
+                    console.error("ADMIN INSERT ERROR:", error);
+                    adminMgmtStatus.textContent = "Failed: " + error.message;
+                    adminMgmtStatus.style.color = "#ff4444";
                 } else {
                     document.getElementById("newAdminEmail").value = "";
+                    adminMgmtStatus.textContent = "Admin successfully added!";
+                    adminMgmtStatus.style.color = "#16a34a";
                     loadSupabaseAdmins(); 
                 }
             } catch(err) {
-                 console.log("ADMIN INSERT ERROR:", err);
-                 alert("Failed to add admin metadata.");
+                 console.error("ADMIN INSERT ERROR:", err);
+                 adminMgmtStatus.textContent = "An unexpected error occurred.";
+                 adminMgmtStatus.style.color = "#ff4444";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Add Admin Role";
+                setTimeout(() => { if (adminMgmtStatus) adminMgmtStatus.textContent = ""; }, 5000);
             }
-            btn.textContent = "Add Admin Role";
         });
     }
 
@@ -297,29 +321,48 @@ document.addEventListener("DOMContentLoaded", function() {
             if (target.classList.contains("supa-admin-delete-btn")) {
                 event.preventDefault();
                 const client = window.getSupabaseClient();
+                const adminMgmtStatus = document.getElementById("adminMgmtStatus");
                 if (!client) return;
 
                 var deleteId = target.getAttribute("data-id");
                 if (!confirm("Delete admin association?")) return;
                 
                 target.textContent = "Deleting...";
+                target.style.pointerEvents = "none";
+                
                 try {
                     var { error } = await client.from("admins").delete().eq("id", deleteId);
                     if (error) {
-                        alert("Delete failed! See console.");
+                        console.error("ADMIN DELETE ERROR:", error);
+                        if (adminMgmtStatus) {
+                            adminMgmtStatus.textContent = "Delete failed: " + error.message;
+                            adminMgmtStatus.style.color = "#ff4444";
+                        }
                         target.textContent = "Delete";
+                        target.style.pointerEvents = "";
                     } else {
                         target.closest("tr").remove(); 
+                        if (adminMgmtStatus) {
+                            adminMgmtStatus.textContent = "Admin deleted successfully.";
+                            adminMgmtStatus.style.color = "#16a34a";
+                        }
                     }
                 } catch(err) {
-                    alert("Delete failed.");
+                    console.error("ADMIN DELETE ERROR:", err);
+                    if (adminMgmtStatus) {
+                        adminMgmtStatus.textContent = "An unexpected error occurred.";
+                        adminMgmtStatus.style.color = "#ff4444";
+                    }
                     target.textContent = "Delete";
+                    target.style.pointerEvents = "";
+                } finally {
+                    setTimeout(() => { if (adminMgmtStatus) adminMgmtStatus.textContent = ""; }, 5000);
                 }
             }
         });
     }
 
-    loadSupabaseAdmins();
+    // loadSupabaseAdmins(); (Now called by authCheck)
 
     // Setup Logout
     var logoutBtn = document.getElementById('logoutBtn');

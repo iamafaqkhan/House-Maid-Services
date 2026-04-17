@@ -29,7 +29,7 @@ drop policy if exists "allow_admin_select" on public.bookings;
 drop policy if exists "allow_admin_update" on public.bookings;
 drop policy if exists "allow_admin_delete" on public.bookings;
 
--- NEW BOOKING POLICIES
+-- BOOKING POLICIES
 -- Anyone can insert a booking
 create policy "allow_public_inserts"
 on public.bookings
@@ -37,24 +37,24 @@ for insert
 to anon, authenticated
 with check (true);
 
--- TEMPORARY DEBUG: Anyone can view, update, delete
+-- SECURE: Only logged-in admins can view, update, delete
 create policy "allow_admin_select"
 on public.bookings
 for select
-to anon, authenticated
+to authenticated
 using ( true );
 
 create policy "allow_admin_update"
 on public.bookings
 for update
-to anon, authenticated
+to authenticated
 using ( true )
 with check ( true );
 
 create policy "allow_admin_delete"
 on public.bookings
 for delete
-to anon, authenticated
+to authenticated
 using ( true );
 
 
@@ -77,21 +77,21 @@ drop policy if exists "anon_can_insert_admins_insecure" on public.admins;
 drop policy if exists "anon_can_update_admins_insecure" on public.admins;
 drop policy if exists "anon_can_delete_admins_insecure" on public.admins;
 
--- Security: Temporarily open for comprehensive frontend debugging
+-- SECURE: Only authenticated users can manage admin metadata
 create policy "allow_admin_select_self"
 on public.admins
 for select
-to anon, authenticated
+to authenticated
 using ( true );
 
 create policy "allow_admin_insert"
 on public.admins
 for insert
-to anon, authenticated
+to authenticated
 with check ( true );
 
 create policy "allow_admin_delete"
 on public.admins
 for delete
-to anon, authenticated
+to authenticated
 using ( true );
