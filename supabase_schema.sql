@@ -78,20 +78,28 @@ drop policy if exists "anon_can_update_admins_insecure" on public.admins;
 drop policy if exists "anon_can_delete_admins_insecure" on public.admins;
 
 -- SECURE: Only authenticated users can manage admin metadata
-create policy "allow_admin_select_self"
+-- Check: Only 'Main Admin' can view/add/delete admins
+create policy "admins_select_policy"
 on public.admins
 for select
 to authenticated
-using ( true );
+using ( 
+    EXISTS (
+        SELECT 1 FROM public.admins 
+        WHERE email = (select auth.jwt() ->> 'email')
+        AND role = 'Main Admin'
+    )
+    OR email = (select auth.jwt() ->> 'email')
+);
 
-create policy "allow_admin_insert"
+create policy "admins_mgmt_policy"
 on public.admins
-for insert
+for all
 to authenticated
-with check ( true );
-
-create policy "allow_admin_delete"
-on public.admins
-for delete
-to authenticated
-using ( true );
+using ( 
+    EXISTS (
+        SELECT 1 FROM public.admins 
+        WHERE email = (select auth.jwt() ->> 'email') 
+        AND role = 'Main Admin'
+    )
+);

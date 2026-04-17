@@ -102,10 +102,10 @@ h1 { text-align:center; margin-bottom: 20px; text-shadow:2px 2px #000; }
 </table>
 </div>
 
-<br><hr style="border-color: rgba(255,255,255,0.2);"><br>
-
-<h2>Admin Management</h2>
-<p style="text-align:center; font-size:14px; margin-bottom:20px;">Use this section to grant Dashboard access by associating active Supabase Auth user emails.</p>
+<div id="adminManagementSection" style="display: none;">
+    <br><hr style="border-color: rgba(255,255,255,0.2);"><br>
+    <h2>Admin Management</h2>
+    <p style="text-align:center; font-size:14px; margin-bottom:20px;">Use this section to grant Dashboard access by associating active Supabase Auth user emails.</p>
 
 <div class="table-container" style="margin-bottom: 20px;">
     <p id="adminMgmtStatus" style="text-align:center; font-size:14px; margin-bottom:10px; min-height:1em; color:#FFD700;"></p>
@@ -119,9 +119,10 @@ h1 { text-align:center; margin-bottom: 20px; text-shadow:2px 2px #000; }
     </form>
 
     <table class="table" id="adminsTable">
-        <tr><th>ID</th><th>Email</th><th>Role</th><th>Actions</th></tr>
+        <tr><th>ID</th><th>Email</th><th>Role</th><th>Created At</th><th>Actions</th></tr>
         <!-- Rows populated by Javascript -->
     </table>
+</div>
 </div>
 
 <a href="/logout" id="logoutBtn" class="button">Logout</a>

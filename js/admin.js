@@ -218,12 +218,44 @@ document.addEventListener("DOMContentLoaded", function() {
             window.location.href = "../login/";
             return;
         }
-        console.log("Session verified. Loading data...");
+
+        const email = session.user.email;
+        console.log("Session verified for:", email);
+
+        // Fetch User Role
+        const roleResult = await fetchCurrentUserRole(email);
+        console.log("User role:", roleResult.role);
+
         loadSupabaseBookings();
-        loadSupabaseAdmins();
+
+        const mgmtSection = document.getElementById("adminManagementSection");
+        if (roleResult.success && roleResult.role === "Main Admin") {
+            if (mgmtSection) mgmtSection.style.display = "block";
+            loadSupabaseAdmins();
+        } else {
+            console.log("User is not a Main Admin. Hiding Management Section.");
+            if (mgmtSection) mgmtSection.style.display = "none";
+        }
     };
 
     authCheck();
+
+    async function fetchCurrentUserRole(email) {
+        const client = window.getSupabaseClient();
+        if (!client) return { success: false, role: null };
+        try {
+            const { data, error } = await client
+                .from("admins")
+                .select("role")
+                .eq("email", email)
+                .maybeSingle();
+            
+            if (error) return { success: false, error: error, role: null };
+            return { success: true, role: data ? data.role : "Admin" };
+        } catch (error) {
+            return { success: false, error: error, role: null };
+        }
+    }
 
     // ============================================
     // ADMINS MANAGEMENT LOGIC
@@ -249,10 +281,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
         rows.forEach(function (a) {
             var tr = document.createElement("tr");
+            var dateStr = "N/A";
+            if (a.created_at) {
+                try {
+                    dateStr = new Date(a.created_at).toLocaleDateString() + " " + new Date(a.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                } catch(e){}
+            }
+
             tr.innerHTML = 
                 "<td>" + escapeHtml(a.id).substring(0,8) + "...</td>" +
                 "<td>" + escapeHtml(a.email) + "</td>" +
                 "<td>" + escapeHtml(a.role) + "</td>" +
+                "<td>" + dateStr + "</td>" +
                 "<td><a href='#' class='button supa-admin-delete-btn' data-id='" + escapeHtml(a.id) + "'>Delete</a></td>";
             adminsTable.appendChild(tr);
         });
